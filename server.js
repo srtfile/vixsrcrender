@@ -16,18 +16,29 @@ const HEADERS = {
 };
 
 // 1. Helper: Request via FlareSolverr
-async function flaresolverrGet(targetUrl) {
+async function flaresolverrGet(targetUrl, retries = 6) {
   const payload = {
     cmd: 'request.get',
     url: targetUrl,
     maxTimeout: 60000,
   };
 
-  const res = await axios.post(FLARESOLVERR_URL, payload, { timeout: 70000 });
-  if (res.data && res.data.status === 'ok') {
-    return res.data.solution;
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const res = await axios.post(FLARESOLVERR_URL, payload, { timeout: 70000 });
+      if (res.data && res.data.status === 'ok') {
+        return res.data.solution;
+      }
+      throw new Error(res.data?.message || 'FlareSolverr failed to solve challenge');
+    } catch (err) {
+      if (attempt < retries && (err.code === 'ECONNREFUSED' || err.message?.includes('ECONNREFUSED'))) {
+        console.log(`[*] FlareSolverr starting up... Retrying in 2s (${attempt}/${retries})...`);
+        await new Promise(r => setTimeout(r, 2000));
+        continue;
+      }
+      throw err;
+    }
   }
-  throw new Error(res.data?.message || 'FlareSolverr failed to solve challenge');
 }
 
 // 2. Decode API response (handles base64 or JSON)
@@ -232,7 +243,7 @@ app.get('/', (req, res) => {
 // Health check endpoint for Render
 app.get('/healthz', (req, res) => res.send('OK'));
 
-app.listen(PORT, () => {
-  console.log(`[+] Server running on port ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`[+] Server running on 0.0.0.0:${PORT}`);
   console.log(`[+] Using FlareSolverr at: ${FLARESOLVERR_URL}`);
 });
