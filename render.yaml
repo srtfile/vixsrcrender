@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: vixsrc-clean-stream
+    runtime: docker
+    plan: free
+    region: oregon
+    healthCheckPath: /healthz
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: FLARESOLVERR_URL
+        value: http://127.0.0.1:8191/v1
