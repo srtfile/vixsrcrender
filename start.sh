@@ -1,23 +1,22 @@
 #!/bin/bash
 set -e
 
-echo "==> Locating FlareSolverr binary/script..."
+# Save the public port for Node.js (provided by Railway / Render)
+APP_PORT="${PORT:-10000}"
 
+echo "==> Starting FlareSolverr on internal port 8191..."
+
+# Force FlareSolverr to ONLY bind to internal port 8191 on localhost
 if [ -f "/app/flaresolverr.py" ]; then
-    echo "Starting FlareSolverr via python (/app/flaresolverr.py)..."
-    python3 -u /app/flaresolverr.py &
+    PORT=8191 HOST=127.0.0.1 python3 -u /app/flaresolverr.py &
 elif [ -f "/opt/flaresolverr/flaresolverr" ]; then
-    echo "Starting FlareSolverr via /opt/flaresolverr/flaresolverr..."
-    /opt/flaresolverr/flaresolverr &
+    PORT=8191 HOST=127.0.0.1 /opt/flaresolverr/flaresolverr &
 elif [ -f "/flaresolverr/flaresolverr" ]; then
-    echo "Starting FlareSolverr via /flaresolverr/flaresolverr..."
-    /flaresolverr/flaresolverr &
+    PORT=8191 HOST=127.0.0.1 /flaresolverr/flaresolverr &
 elif which flaresolverr > /dev/null 2>&1; then
-    echo "Starting FlareSolverr via PATH..."
-    flaresolverr &
+    PORT=8191 HOST=127.0.0.1 flaresolverr &
 else
-    echo "Starting FlareSolverr via python module..."
-    python3 -u -m flaresolverr &
+    PORT=8191 HOST=127.0.0.1 python3 -u -m flaresolverr &
 fi
 
 echo "==> Waiting for FlareSolverr to initialize on http://127.0.0.1:8191/health..."
@@ -33,6 +32,9 @@ until curl -s http://127.0.0.1:8191/health > /dev/null 2>&1; do
     fi
 done
 
-echo "==> FlareSolverr is online!"
-echo "==> Starting Node.js Stream Proxy on port ${PORT:-10000}..."
+echo "==> FlareSolverr is online on 127.0.0.1:8191!"
+echo "==> Starting Node.js Stream Proxy on public port ${APP_PORT}..."
+export PORT="${APP_PORT}"
+export FLARESOLVERR_URL="http://127.0.0.1:8191/v1"
 exec node /node_app/server.js
+
