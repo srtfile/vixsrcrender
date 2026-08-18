@@ -1,0 +1,17 @@
+{
+  "name": "vixsrc-stream-proxy",
+  "version": "1.0.0",
+  "description": "Ad-free stream extraction and relay proxy with FlareSolverr support",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
